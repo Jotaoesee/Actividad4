@@ -51,5 +51,15 @@ app.post("/perfiles/crear_perfil", async (req, res) => {
     }
 });
 
+// ===================== Endpoint para obtener perfil por UID =====================
+app.get("/perfiles/perfil", async (req, res) => {
+    const { uid } = req.query;
+    const perfilRef = await db.collection("perfiles").doc(uid).get();
+    if (!perfilRef.exists) {
+        return res.status(404).json({ message: "Perfil no encontrado" });
+    }
+    res.json(perfilRef.data());
+});
+
 // Exportar API de Express como una función de Firebase
 exports.api = functions.https.onRequest(app);
