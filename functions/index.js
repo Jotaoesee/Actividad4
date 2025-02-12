@@ -135,6 +135,61 @@ app.post("/productos/crear_producto", async (req, res) => {
 //https://us-central1-actividad4pspad.cloudfunctions.net/api/productos/crear_producto?nombre=teclado&precio=50
 //Sustituir nombre y precio por los valores deseados
 
+// ===================== Endpoint para pagar un producto con Stripe =====================
+app.post("/productos/pagar_producto", async (req, res) => {
+    try {
+        const { uid_producto, uid_usuario, paymentMethodId } = req.query;
+
+        // Verificar usuario en Firestore
+        const usuarioRef = await db.collection("perfiles").doc(uid_usuario).get();
+        if (!usuarioRef.exists) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+        const usuario = usuarioRef.data();
+
+        // Verificar producto en Firestore
+        const productoRef = await db.collection("productos").doc(uid_producto).get();
+        if (!productoRef.exists) {
+            return res.status(404).json({ error: "Producto no encontrado" });
+        }
+        const producto = productoRef.data();
+
+        // Verificar que el usuario tenga un cliente en Stripe
+        if (!usuario.stripeCustomerId) {
+            return res.status(400).json({ error: "El usuario no tiene un cliente en Stripe" });
+        }
+
+        // Crear el pago con el método de pago especificado
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: producto.precio * 100, 
+            currency: "usd",
+            customer: usuario.stripeCustomerId,
+            payment_method: paymentMethodId, 
+            confirm: true,
+            automatic_payment_methods: {
+                enabled: true,
+                allow_redirects: "never" 
+            }
+        });
+
+        // Guardar recibo en Firestore
+        const recibo = {
+            uid_producto,
+            nombre_producto: producto.nombre,
+            precio: producto.precio,
+            status: paymentIntent.status,
+            fecha: new Date().toISOString()
+        };
+
+        await db.collection("perfiles").doc(uid_usuario).collection("recibos").add(recibo);
+        res.json({ message: "Pago realizado", recibo });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// Para pagar producto en postman poner metodo post y de url:
+//https://us-central1-actividad4pspad.cloudfunctions.net/api/productos/pagar_producto?uid_producto=teA42YxNVwZsBtSNfktV&uid_usuario=R5TCEn0WK27p1sUV6HKT&paymentMethodId=pm_card_visa
+//Sustituir uid_producto, uid_usuario por los valores deseados    
 
 // Exportar API de Express como una función de Firebase
 exports.api = functions.https.onRequest(app);
