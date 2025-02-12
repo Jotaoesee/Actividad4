@@ -50,16 +50,39 @@ app.post("/perfiles/crear_perfil", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// Para crear perfil en postman poner metodo post y de url: 
+// https://us-central1-actividad4pspad.cloudfunctions.net/api/perfiles/crear_perfil?nombre=Pedro&email=pedro@example.com&edad=28&tarjeta_credito=4111111111111111&caducidad=10/28&cvv=123
 
 // ===================== Endpoint para obtener perfil por UID =====================
 app.get("/perfiles/perfil", async (req, res) => {
-    const { uid } = req.query;
-    const perfilRef = await db.collection("perfiles").doc(uid).get();
-    if (!perfilRef.exists) {
-        return res.status(404).json({ message: "Perfil no encontrado" });
+    try {
+        let { uid } = req.query;
+        
+        // 🔹 Eliminar espacios en blanco
+        uid = uid ? uid.trim() : null;
+
+        console.log(`🔹 UID recibido: "${uid}"`); 
+
+        if (!uid) {
+            return res.status(400).json({ error: "El UID es obligatorio" });
+        }
+
+        const perfilRef = await db.collection("perfiles").doc(uid).get();
+
+        if (!perfilRef.exists) {
+            console.log(`❌ Perfil no encontrado para UID: "${uid}"`); 
+            return res.status(404).json({ message: "Perfil no encontrado" });
+        }
+
+        res.json(perfilRef.data());
+    } catch (error) {
+        console.error("❌ Error en /perfiles/perfil:", error);
+        res.status(500).json({ error: error.message });
     }
-    res.json(perfilRef.data());
 });
+// Para obtener perfil en postman poner metodo get y de url:
+//https://us-central1-actividad4pspad.cloudfunctions.net/api/perfiles/perfil?uid=UidUsuario
+
 
 // Exportar API de Express como una función de Firebase
 exports.api = functions.https.onRequest(app);
