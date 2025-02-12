@@ -84,5 +84,35 @@ app.get("/perfiles/perfil", async (req, res) => {
 //https://us-central1-actividad4pspad.cloudfunctions.net/api/perfiles/perfil?uid=UidUsuario
 
 
+// ===================== Endpoint para obtener perfiles con filtro de edad =====================
+app.get("/perfiles/perfiles", async (req, res) => {
+    try {
+        const { edad_min } = req.query;
+
+        if (!edad_min) {
+            return res.status(400).json({ error: "El parámetro edad_min es obligatorio" });
+        }
+
+        const perfilesSnapshot = await db.collection("perfiles").where("edad", ">", parseInt(edad_min)).get();
+
+        if (perfilesSnapshot.empty) {
+            return res.status(404).json({ message: "No se encontraron perfiles con la edad mínima especificada" });
+        }
+
+        const perfiles = perfilesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        res.json(perfiles);
+    } catch (error) {
+        console.error("❌ Error en /perfiles/perfiles:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// Para obtener perfiles en postman poner metodo get y de url:
+//https://us-central1-actividad4pspad.cloudfunctions.net/api/perfiles/perfiles?edad_min=30
+
+
 // Exportar API de Express como una función de Firebase
 exports.api = functions.https.onRequest(app);
