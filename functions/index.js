@@ -52,6 +52,7 @@ app.post("/perfiles/crear_perfil", async (req, res) => {
 });
 // Para crear perfil en postman poner metodo post y de url: 
 // https://us-central1-actividad4pspad.cloudfunctions.net/api/perfiles/crear_perfil?nombre=Pedro&email=pedro@example.com&edad=28&tarjeta_credito=4111111111111111&caducidad=10/28&cvv=123
+// Sustituir los valores por los deseados
 
 // ===================== Endpoint para obtener perfil por UID =====================
 app.get("/perfiles/perfil", async (req, res) => {
@@ -82,6 +83,7 @@ app.get("/perfiles/perfil", async (req, res) => {
 });
 // Para obtener perfil en postman poner metodo get y de url:
 //https://us-central1-actividad4pspad.cloudfunctions.net/api/perfiles/perfil?uid=UidUsuario
+//Sustituir UidUsuario por el uid del usuario deseado
 
 
 // ===================== Endpoint para obtener perfiles con filtro de edad =====================
@@ -112,6 +114,26 @@ app.get("/perfiles/perfiles", async (req, res) => {
 });
 // Para obtener perfiles en postman poner metodo get y de url:
 //https://us-central1-actividad4pspad.cloudfunctions.net/api/perfiles/perfiles?edad_min=30
+//Sustituir edad_min por la edad deseada
+
+// ===================== Endpoint para crear producto =====================
+app.post("/productos/crear_producto", async (req, res) => {
+    const { nombre, precio } = req.query;
+
+    if (!nombre || !precio) {
+        return res.status(400).json({ error: "El nombre y el precio son obligatorios" });
+    }
+
+    const productoRef = await db.collection("productos").add({
+        nombre,
+        precio: parseFloat(precio)
+    });
+
+    res.json({ id: productoRef.id, message: "Producto creado exitosamente" });
+});
+// Para crear producto en postman poner metodo post y de url:
+//https://us-central1-actividad4pspad.cloudfunctions.net/api/productos/crear_producto?nombre=teclado&precio=50
+//Sustituir nombre y precio por los valores deseados
 
 
 // Exportar API de Express como una función de Firebase
