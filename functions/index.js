@@ -191,5 +191,29 @@ app.post("/productos/pagar_producto", async (req, res) => {
 //https://us-central1-actividad4pspad.cloudfunctions.net/api/productos/pagar_producto?uid_producto=teA42YxNVwZsBtSNfktV&uid_usuario=R5TCEn0WK27p1sUV6HKT&paymentMethodId=pm_card_visa
 //Sustituir uid_producto, uid_usuario por los valores deseados    
 
+// ===================== Endpoint para obtener todos los recibos =====================
+app.get("/perfiles/recibos", async (req, res) => {
+    try {
+        const recibosSnapshot = await db.collectionGroup("recibos").get();
+
+        if (recibosSnapshot.empty) {
+            return res.status(404).json({ message: "No hay recibos registrados" });
+        }
+
+        const recibos = recibosSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        res.json(recibos);
+    } catch (error) {
+        console.error("❌ Error al obtener recibos:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// Para obtener recibos en el navegador, no entiendo porque me funciona en el navegador y no en postman:
+//https://api-qeedeau25a-uc.a.run.app/perfiles/recibos
+
+
 // Exportar API de Express como una función de Firebase
 exports.api = functions.https.onRequest(app);
